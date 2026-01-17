@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <script src="./assets-partials/inject-navbar.js" defer></script>
+    <link rel="stylesheet" href="./assets-partials/app.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+        crossorigin="anonymous" />
+
+    <style>
+        .main-container form {
+            display: flex;
+            align-items: flex-start;
+            row-gap: 2rem;
+            column-gap: 1rem;
+            padding: 2rem;
+            border: 2px groove blue;
+            background-color: rgb(175, 205, 229);
+            margin: 0.5rem auto;
+        }
+
+        .location-inputs {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        input[type="number"] {
+            width: 6rem;
+            height: 1.75rem;
+        }
+
+        .timeOption {
+            gap: 1.5rem;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div id="navbar-root"></div>
+
+
+    <div class="main-container">
+
+        <form>
+            <label>Eşya: <input type="text" id="itemInfo"> </label>
+
+            <label>Açıklama: <textarea rows="3" cols="40"></textarea> </label>
+            <label> Başlangıç Fiyatı: <input type="number" id="minPrice"> </label>
+            <label> Minimum Arttırma Katsayısı: <input type="number" id="minCo"></label>
+            <label>Bitiş Fiyatı: <input type="number" id="maxPrice"></label>
+            <label>Fotoğraflar: <input type="file" id="itemImages"></label>
+
+            <div class="location-inputs">
+
+                <label>
+                    İl:
+                    <select id="provinceSelect" name="province" autocomplete="address-level1">
+                        <option value="">Seçiniz</option>
+                        <!-- 81 il burada doldurulacak -->
+                    </select>
+                </label>
+
+                <label>
+                    İlçe:
+                    <select id="districtSelect" name="district" autocomplete="address-level2" disabled
+                        aria-disabled="true">
+                        <option value="">Önce il seçiniz</option>
+                    </select>
+                </label>
+
+                <label>
+                    Mahalle:
+                    <select id="neighborhoodSelect" name="neighborhood" autocomplete="address-level3" disabled
+                        aria-disabled="true">
+                        <option value="">Önce ilçe seçiniz</option>
+                    </select>
+                </label>
+            </div>
+
+            <div class="timeOption dfc"><label> Süre (dakika): <input type="number" id="setTime"></label>
+                <label> <input type="checkbox" id="noLimit"> Sınırsız </label>
+            </div>
+
+            <label> <button type="reset"> Temizle </button>
+                <button type="submit"> Gönder </button>
+            </label>
+
+        </form>
+
+    </div>
+
+</body>
+
+<script src="./assets-partials/category.js" defer></script>
+
+<script src="./assets-partials/location.js" defer></script>
+
+</html>

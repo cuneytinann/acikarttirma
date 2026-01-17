@@ -1,0 +1,35 @@
+[
+  {
+    "id": "hayvan",
+    "label": "Hayvan",
+    "children": [
+      { "id": "buyukbas", "label": "Büyükbaş" },
+      { "id": "kucukbas", "label": "Küçükbaş" },
+      {
+        "id": "kanatli",
+        "label": "Kanatlı",
+        "children": [
+          {
+            "id": "tavuk",
+            "label": "Tavuk",
+            "children": [
+              { "id": "sus-tavugu", "label": "Süs tavuğu" },
+              { "id": "yumurta-tavugu", "label": "Yumurta tavuğu" }
+            ]
+          },
+          { "id": "ordek", "label": "Ördek" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "araba",
+    "label": "Araba",
+    "children": [
+      { "id": "sedan", "label": "Sedan" },
+      { "id": "suv", "label": "SUV" }
+    ]
+  },
+  { "id": "ev", "label": "Ev" },
+  { "id": "kiyafet", "label": "Kıyafet" }
+]

@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Açık Arttırma</title>
+
+    <link rel="stylesheet" href="./assets-partials/app.css" />
+    <script src="./assets-partials/inject-navbar.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+        crossorigin="anonymous" />
+
+    <style>
+        :root {
+            --auction-bg: rgb(233, 225, 225);
+            --state-info-color: rgb(255, 255, 0);
+            --state-info-bg: rgb(217, 51, 51);
+            --auction-frame: rgb(95, 180, 180);
+            --price-t: rgb(0, 0, 255);
+            --price-user: rgb(11, 158, 11);
+            --c-input-bg: rgba(59, 55, 55, 0.294);
+            --c-input-bd: rgb(0, 0, 0);
+            --c-active-bg: rgb(124, 110, 110);
+            --c-active-bd: rgba(0, 255, 255, 0.5);
+            --inout-border: rgba(0, 0, 0, 0.5);
+        }
+
+        .main-container {
+            min-height: 32rem;
+        }
+
+        .state-info {
+            color: var(--state-info-color);
+            background: var(--state-info-bg);
+            height: 2.6rem;
+            line-height: 2.6rem;
+            font-size: 1.4rem;
+            font-weight: 700;
+            overflow: hidden;
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        .state-info__track {
+            display: inline-flex;
+            align-items: center;
+            width: max-content;
+            will-change: transform;
+            transform: translate3d(0, 0, 0);
+            animation: ticker var(--dur, 20s) linear infinite;
+        }
+
+        /* Hover ile DUR (mobilde hover yoksa etkisiz) */
+        .state-info:hover .state-info__track {
+            animation-play-state: paused;
+        }
+
+        .state-info__set {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .state-info__item {
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+
+        /* Her mesajdan sonra ürettiğimiz boşluk */
+        .state-info__gap {
+            flex: 0 0 auto;
+            width: var(--gap, 4rem);
+        }
+
+        @keyframes ticker {
+            to {
+                transform: translate3d(calc(-1 * var(--shift, 0px)), 0, 0);
+            }
+        }
+
+        .auction {
+            flex: 3;
+            background-color: var(--auction-frame);
+            flex-direction: row;
+            padding: 1rem;
+            gap: 1rem;
+            border: 2px outset var(--inout-border);
+        }
+
+        .auction>* {
+            height: 100%;
+            background-color: var(--auction-bg);
+            border: 4px inset var(--inout-border);
+            display: flex;
+        }
+
+        .auction-display {
+            flex: 1;
+        }
+
+        .auction-process {
+            flex: 2;
+            flex-direction: column;
+        }
+
+        .auction-process>* {
+            padding: 0.5rem 1rem;
+        }
+
+        .item-info,
+        .item-info2 {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .item-info {
+            align-items: flex-start;
+        }
+
+        .item-info2 {
+            align-items: flex-end;
+        }
+
+        .price,
+        .new-price {
+            flex: 2;
+            justify-content: flex-start;
+            padding-left: 2rem;
+            gap: 1rem;
+            align-items: center;
+            display: flex;
+        }
+
+        .coefficients,
+        .spin-buttons {
+            flex: 2;
+            gap: 1rem;
+        }
+
+        .offer {
+            flex: 2;
+            align-items: flex-start;
+            display: flex;
+            justify-content: center;
+        }
+
+        .last-price-t,
+        .new-price-t {
+            font-size: 1.5rem;
+            color: var(--price-t);
+        }
+
+        .last-price,
+        .your-price {
+            font-size: 1.75rem;
+            color: var(--price-user);
+            text-decoration: underline;
+        }
+
+        .coefficients * {
+            border: 2px groove var(--c-input-bd);
+            background-color: var(--c-input-bg);
+            border-radius: 1rem;
+            padding: 0.4rem 0.2rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            min-height: 0;
+            min-width: 0;
+            height: 3rem;
+            width: 4rem;
+            user-select: none;
+            cursor: pointer;
+        }
+
+        .spin-buttons * {
+            border: 2px groove var(--c-input-bd);
+            border-radius: 0.5rem;
+            background-color: var(--c-input-bg);
+            font-size: 1.7rem;
+            font-weight: 700;
+            min-height: 0;
+            min-width: 0;
+        }
+
+        .minus {
+            height: 1.8rem;
+            width: 2.5rem;
+            padding-bottom: 0.3rem;
+            margin-top: 0.6rem;
+        }
+
+        .plus {
+            height: 1.8rem;
+            width: 2.5rem;
+            padding-top: 0.15rem;
+            margin-top: 0.6rem;
+        }
+
+        .c-input {
+            height: 3rem;
+            width: 4rem;
+            padding: 0.3rem 0.5rem;
+        }
+
+        label:has(input:checked),
+        .minus:active,
+        .plus:active,
+        .offer button {
+            border: 3px outset var(--c-active-bd);
+            background-color: var(--c-active-bg);
+            color: var(--c-active-bd);
+        }
+
+        .offer button {
+            border-radius: 0.4rem 0.8rem;
+            padding: 0.5rem 1rem;
+            text-shadow: 1px 1px 4px;
+            font-size: 1.3rem;
+        }
+
+        @media (hover: hover) {
+
+            .offer button:hover {
+                border-color: white;
+                outline: 1px solid gray;
+                color: white;
+                -webkit-text-stroke: 1px gray;
+            }
+
+        }
+
+        .chat {
+            flex: 2;
+            padding: 1rem;
+            background-color: rgb(143, 206, 119);
+            border: 2px outset rgba(0, 0, 0, 0.5);
+        }
+
+        .chat>* {
+            width: 100%;
+        }
+
+        .messages {
+            flex: 11;
+            background-color: #fff;
+            border: 4px inset rgba(0, 0, 0, 0.5);
+            min-height: 8rem;
+        }
+
+        .send-bar {
+            flex: 1;
+            flex-direction: row;
+            gap: 0.6rem;
+        }
+
+        .send-bar * {
+            height: 2rem;
+        }
+
+        .send-bar input {
+            flex: 6;
+            border-radius: 0.5rem;
+            padding: 0 1rem;
+        }
+
+        .send-bar button {
+            flex: 1;
+            border-radius: 0.75rem 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+
+            .main-container {
+                margin: 0;
+            }
+
+            .state-info {
+                margin: 5rem 0 0.5rem 0;
+            }
+
+        }
+
+        @media (max-width: 480px) {
+
+            .auction {
+                flex-direction: column;
+            }
+
+            .auction-display {
+                order: 2;
+                width: 100%;
+                min-height: 12rem;
+            }
+
+            .price,
+            .new-price {
+                padding: 0.5rem 1rem;
+                justify-content: center;
+                flex-wrap: wrap;
+                row-gap: 0.5rem;
+            }
+
+
+        }
+    </style>
+
+
+</head>
+
+<body>
+
+    <div id="navbar-root"></div>
+
+    <div class="state-info"> </div>
+
+    <div class="main-container">
+
+        <div class="auction dfc">
+
+            <div class="auction-display"> Ahmet: 200 TL, Mehmet 300 TL</div>
+
+            <div class="auction-process">
+
+                <div class="item-info">
+                    <span class="general-info">Volskagen 1.4</span>
+                    <span class="remaining-time">30:43</span>
+                    <span class="location">Kadikoy</span>
+                </div>
+
+                <div class="price"> <span class="last-price-t">Verilen son fiyat:</span> <span class="last-price"> X
+                        TL</span>
+                </div>
+
+
+                <div class="coefficients dfc">
+                    <label class="c1">10 <input type="radio" name="c-values"></label>
+                    <label class="c2">20 <input type="radio" name="c-values"></label>
+                    <label class="c3">30 <input type="radio" name="c-values"></label>
+                    <label class="c4">40 <input type="radio" name="c-values"></label>
+                </div>
+
+                <div class="spin-buttons dfc">
+                    <button type="button" class="minus">-</button>
+                    <label class="c-input"> 50 <input type="radio" name="c-values"> </label>
+                    <button type="button" class="plus">+</button>
+                </div>
+
+                <div class="new-price"><span class="new-price-t">Teklif edilen yeni fiyat:</span> <span
+                        class="your-price"> X + ck TL</span></div>
+
+                <div class="offer"><button type="button">TEKLİF VER!</button></div>
+
+                <div class="item-info2">
+                    <span class="start-price">900K</span>
+                    <span class="set-time">60dk</span>
+                    <span class="end-price">1200k</span>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="chat all-dfc">
+            <div class="messages"></div>
+            <div class="send-bar"> <input type="text" placeholder="Mesaj yaz..."> <button type="button">Gönder</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Örnek kullanım
+        createStateInfoTicker(
+            [
+                "Son fiyat: 35.000 TL",
+                "Kalan süre: 30:43",
+                "Son teklifi veren: Ahmet Mehmet",
+                "Yeni teklif bekleniyor"
+            ],
+            {
+                gapRem: 4,         // rem cinsinden boşluk
+                remPerSecond: 6,   // saniyede kaç rem kayacak (hız)
+                hoverPause: true   // hover durdurma (true/false)
+            }
+        );
+
+        function createStateInfoTicker(messages, options = {}) {
+            const container = document.querySelector(".state-info");
+            if (!container) return;
+
+            // Güvenlik: en az 2 mesaj varsayımı (siz de bunu istediniz)
+            const msgList = (messages || []).filter(t => String(t).trim().length > 0);
+            if (msgList.length < 2) {
+                container.textContent = msgList[0] ?? "";
+                return;
+            }
+
+            const opts = {
+                gapRem: Number.isFinite(options.gapRem) ? options.gapRem : 4,
+                remPerSecond: Number.isFinite(options.remPerSecond) ? options.remPerSecond : 6,
+                hoverPause: options.hoverPause !== false
+            };
+
+            container.innerHTML = "";
+            if (!opts.hoverPause) {
+                // hover pause istemiyorsa css kuralını “etkisiz” bırakmak için:
+                container.style.pointerEvents = "none";
+            } else {
+                container.style.pointerEvents = "";
+            }
+
+            const track = document.createElement("div");
+            track.className = "state-info__track";
+            track.style.setProperty("--gap", `${opts.gapRem}rem`);
+            container.appendChild(track);
+
+            // 1) set oluştur: 1 + gap + 2 + gap + ... + N + gap (SONDA DA GAP VAR!)
+            const set = document.createElement("div");
+            set.className = "state-info__set";
+            track.appendChild(set);
+
+            const appendGap = () => {
+                const gapEl = document.createElement("span");
+                gapEl.className = "state-info__gap";
+                set.appendChild(gapEl);
+            };
+
+            for (const text of msgList) {
+                const item = document.createElement("span");
+                item.className = "state-info__item";
+                item.textContent = text;
+                set.appendChild(item);
+                appendGap(); // her item sonrası, SONDA DA ekleniyor
+            }
+
+            // 2) klonla (kesintisiz devam için)
+            const clone = set.cloneNode(true);
+            track.appendChild(clone);
+
+            const recalc = () => {
+                // animasyonu durdur -> ölç -> yeniden başlat
+                track.style.animation = "none";
+                track.offsetHeight; // reflow
+
+                // set'in (tek tur) px genişliği: burada gap'ler DAHİL
+                const shiftPx = set.scrollWidth;
+                track.style.setProperty("--shift", `${shiftPx}px`);
+
+                // rem/s hızına göre duration hesapla:
+                // px -> rem dönüşümü için root font-size px
+                const rootFontPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+                const shiftRem = shiftPx / rootFontPx;
+                const durationSec = shiftRem / Math.max(0.1, opts.remPerSecond);
+
+                track.style.setProperty("--dur", `${durationSec}s`);
+
+                // yeniden başlat
+                track.style.animation = "";
+            };
+
+            // Mobilde font/layout stabilitesi için 2 frame sonra ölç
+            requestAnimationFrame(() => requestAnimationFrame(recalc));
+
+            // Resize / orientation / mobil adres çubuğu vb.
+            let t;
+            window.addEventListener("resize", () => {
+                clearTimeout(t);
+                t = setTimeout(recalc, 150);
+            });
+        }
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Açık Arttırma</title>
+
+    <link rel="stylesheet" href="./assets-partials/app.css" />
+
+    <script src="./assets-partials/inject-navbar.js" defer></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+        crossorigin="anonymous" />
+
+    <style>
+        :root {
+            --home-color: rgb(255, 255, 255);
+            --home-background: rgb(89, 171, 196);
+            --row-effect: rgba(86, 67, 138, 0.8);
+            --item-background: rgb(152, 206, 216);
+            --toggler-outline: rgb(0, 0, 0);
+        }
+
+        .categori {
+            flex: 1;
+            height: fit-content;
+            background-color: var(--home-background);
+            color: var(--home-color);
+            padding: 1rem 0;
+        }
+
+        .togglers {
+            gap: 0.5rem;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--home-color);
+            -webkit-text-stroke: 1px var(--toggler-outline);
+        }
+
+        .togglers button {
+            padding: 0.1rem 0.25rem;
+            border: 1px groove var(--home-color);
+            outline: 1px solid var(--toggler-outline);
+        }
+
+        .togglers button i {
+            transform-origin: 50% 50%;
+            transition: transform 250ms ease;
+        }
+
+        .togglers button[aria-expanded="true"] i {
+            transform: rotateX(180deg);
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* CATEGORI TREE (REM + OTOMATİK SEVİYE STİLLERİ)                      */
+        /* ------------------------------------------------------------------ */
+
+        .categori-list {
+            /* font-size (seviye 0 -> aşağı indikçe düşer) */
+            --fs0: 1.2rem;
+            /* seviye 0 */
+            --fsStep: 0.08rem;
+            /* her seviyede -0.125rem (~2px) */
+            --fsMin: 0.9rem;
+            /* en küçük font */
+
+            --gap0: 0.5rem;
+            --gapStep: 0.1rem;
+            --gapMin: 0.1rem;
+
+            /* buton wrapperi, tıklama alanı için önemli */
+            --btn0: 2rem;
+            --btnStep: 0.2rem;
+            --btnMin: 1rem;
+
+            --py0: 0.6rem;
+            --pyStep: 0.125rem;
+            --pyMin: 0.3rem;
+            --px: 0.8rem;
+            /* indent */
+            --indentStep: 0.75rem;
+
+            --bw0: 0.18rem;
+            --bwStep: 0.06rem;
+            --bwMin: 0.06rem;
+
+            width: 100%;
+        }
+
+        .categori-list ul,
+        .categori-list li {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        .categori-list .wrap-areas {
+            position: relative;
+            width: clamp(var(--btnMin), calc(var(--btn0) - (var(--d) * var(--btnStep))), var(--btn0));
+            height: calc(clamp(var(--btnMin), calc(var(--btn0) - (var(--d) * var(--btnStep))), var(--btn0))*0.5);
+        }
+
+        .categori-list .wrap-areas::before {
+            content: "";
+            display: inline-block;
+            width: 0.45em;
+            height: 0.45em;
+            border-right: 0.18em solid;
+            border-bottom: 0.18em solid;
+            transform: rotate(-45deg);
+            /* sağa bakan ok */
+            transform-origin: 50% 50%;
+            transition: transform 200ms ease;
+        }
+
+        .categori-list li[aria-expanded="true"]>.cate-row .wrap-areas::before {
+            transform: rotate(45deg);
+        }
+
+        .categori-list .cate-title {
+            flex: 1;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .categori-list .cate-children[hidden] {
+            display: none !important;
+        }
+
+        /* Derinlik (JS basacak): --d ---> seviye arttıkça düş */
+        .categori-list .cate-row {
+            display: flex;
+            align-items: center;
+            line-height: 1;
+            border-style: solid;
+            border-width: clamp(var(--bwMin), calc(var(--bw0) - (var(--d) * var(--bwStep))), var(--bw0)) 0;
+            font-size: clamp(var(--fsMin), calc(var(--fs0) - (var(--d) * var(--fsStep))), var(--fs0));
+            padding: clamp(var(--pyMin), calc(var(--py0) - (var(--d) * var(--pyStep))), var(--py0)) var(--px) clamp(var(--pyMin), calc(var(--py0) - (var(--d) * var(--pyStep))), var(--py0)) calc(var(--px) + (var(--d) * var(--indentStep)));
+            gap: clamp(var(--gapMin), calc(var(--gap0) - (var(--d) * var(--gapStep))), var(--gap0));
+            text-shadow: 1px 1px 2px rgb(0, 0, 0);
+        }
+
+        @media (hover: hover) {
+            .categori-list .cate-row:hover {
+                background-color: var(--row-effect);
+            }
+        }
+
+        .categori-list .cate-row:active {
+            background-color: var(--row-effect);
+        }
+
+        /* İsteğe bağlı: seviye seviye ekstra ve override still için hazır class
+   main-branch en ana kategori: Hayvan, Araba, Ev, Kıyafet. nodeNbranch (n) arttıkca daha ayrıntılı dal */
+        .categori-list li.main-branch>.cate-row {
+            font-weight: 700;
+        }
+
+        .categori-list li.node1branch>.cate-row {
+            font-weight: 650;
+        }
+
+        .categori-list li.node2branch>.cate-row {
+            font-weight: 600;
+        }
+
+        .categori-list li.node2branch>.cate-row {
+            font-weight: 550;
+        }
+
+        .item {
+            flex: 5;
+            background-color: var(--home-background);
+            color: var(--home-color);
+            height: fit-content;
+            padding: 1rem 0;
+        }
+
+        .item .togglers {
+            display: none;
+        }
+
+        .filters {
+            border: solid var(--home-color);
+            border-width: 0.2rem 0;
+        }
+
+        .filters form {
+            padding: 0.5rem 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            row-gap: 1.5rem;
+            column-gap: 2rem;
+        }
+
+        .filters form label {
+            text-shadow: 1px 1px 2px rgb(0, 0, 0);
+        }
+
+        .filters form input {
+            width: 6rem;
+            height: 1.75rem;
+        }
+
+        .filters form button {
+            width: 3rem;
+            height: 2rem;
+            border-color: var(--home-color);
+        }
+
+        /* ITEM LIST – GRID LAYOUT (3 → 2 → 1) */
+        .item-list {
+            width: 100%;
+            display: grid;
+            gap: 1rem;
+            padding: 1rem;
+            background-color: var(--item-background);
+            color: black;
+            align-content: start;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .item-list>* {
+            width: 100%;
+            min-width: 0;
+            aspect-ratio: 4 / 3;
+            height: auto;
+            overflow: hidden;
+            border: 2px solid white;
+            display: flex;
+        }
+
+        .item-list img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .item-list .title,
+        .item-list .desc {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .paginator {
+            gap: 0.4rem;
+            padding: 1rem 1rem 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .paginator button {
+            appearance: none;
+            border: 1px solid rgba(0, 0, 0, 0.35);
+            background: rgba(255, 255, 255, 0.35);
+            padding: 0.28rem 0.55rem;
+            border-radius: 0.5rem;
+            line-height: 1;
+            transition: 160ms ease;
+        }
+
+        .paginator button:hover:not([disabled]) {
+            transform: translateY(-1px);
+        }
+
+        .paginator button[disabled] {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .paginator button.active {
+            font-weight: 800;
+            text-decoration: underline;
+            background: rgba(255, 255, 255, 0.65);
+        }
+
+        .paginator .dots {
+            padding: 0 0.25rem;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+
+            .categori,
+            .item {
+                flex: 0;
+            }
+
+            .categori-list,
+            .filters {
+                display: none;
+            }
+
+            .item .togglers {
+                display: flex;
+            }
+
+            .item-list {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+        }
+
+        @media (max-width: 480px) {
+
+            .item-list {
+                grid-template-columns: 1fr;
+            }
+
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div id="navbar-root"></div>
+    <!-- navbar toggle'ına basınca navbardan kaynaklanan boşluklar gitsin -->
+
+    <div class="main-container onlyc-dfc">
+
+
+        <div class="categori">
+            <div class="togglers all1c-dfc">
+                Kategoriler
+                <button id="main-btn" type="button"><i class="fa-solid fa-caret-down"></i></button>
+            </div>
+            <div class="categori-list">
+                <ul id="categoriTree" class="cate-tree"></ul>
+            </div>
+        </div>
+
+        <div class="item">
+            <div class="togglers all1c-dfc">
+                Filtreler
+                <button id="main-btn2" type="button"><i class="fa-solid fa-caret-down"></i></button>
+            </div>
+            <!-- <hr style="width: 100%;"> -->
+            <div class="filters">
+                <form class="location-form" id="locationForm" novalidate>
+                    <label>
+                        İl:
+                        <select id="provinceSelect" name="province" autocomplete="address-level1">
+                            <option value="">Seçiniz</option>
+                            <!-- 81 il burada doldurulacak -->
+                        </select>
+                    </label>
+
+                    <label>
+                        İlçe:
+                        <select id="districtSelect" name="district" autocomplete="address-level2" disabled
+                            aria-disabled="true">
+                            <option value="">Önce il seçiniz</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        Mahalle:
+                        <select id="neighborhoodSelect" name="neighborhood" autocomplete="address-level3" disabled
+                            aria-disabled="true">
+                            <option value="">Önce ilçe seçiniz</option>
+                        </select>
+                    </label>
+                    <label>
+                        Gösterim:
+                        <select>
+                            <option value="">Hepsi</option>
+                            <option value="">Canlı</option>
+                            <option value="">Planlanmış</option>
+                            <option value="">Devam ediyor..</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        Fiyat Aralığı:
+                        <input type="number" placeholder="min fiyat"> - <input type="number" placeholder="max fiyat"> TL
+                    </label>
+
+                    <label>
+                        Yüklenme tarihi:
+                        <select>
+                            <option value="">Hepsi</option>
+                            <option value="">Son 1 gün</option>
+                            <option value="">1 ay içinde</option>
+                            <option value="">1 yıl...</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        <button> <i class="fa-solid fa-filter"></i></button>
+                    </label>
+
+                </form>
+            </div>
+
+            <div class="item-list">
+
+            <div id="item1">1</div>
+            <div id="item2">2</div>
+            <div id="item3">3</div>
+            <div id="item4">4</div>
+            <div id="item5">5</div>
+            <div id="item6">6</div>
+            <div id="item7">7</div>
+            <div id="item8">8</div>
+            <div id="item9">9</div>
+            <div id="item10">10</div>
+            <div id="item11">11</div>
+            <div id="item12">12</div>
+            <div id="item13">13</div>
+            <div id="item14">14</div>
+            <div id="item15">15</div>
+            <div id="item16">16</div>
+            <div id="item17">17</div>
+            <div id="item18">18</div>
+            <div id="item19">19</div>
+            <div id="item20">20</div>
+            <div id="item21">21</div>
+            <div id="item22">22</div>
+            <div id="item23">23</div>
+            <div id="item24">24</div>
+            <div id="item25">25</div>
+            <div id="item26">26</div>
+            <div id="item27">27</div>
+            <div id="item28">28</div>
+            <div id="item29">29</div>
+            <div id="item30">30</div>
+            <div id="item31">31</div>
+            <div id="item32">32</div>
+            <div id="item33">33</div>
+            <div id="item34">34</div>
+            <div id="item35">35</div>
+            <div id="item36">36</div>
+            <div id="item37">37</div>
+            <div id="item38">38</div>
+            <div id="item39">39</div>
+            <div id="item40">40</div>
+            <div id="item41">41</div>
+            <div id="item42">42</div>
+            <div id="item43">43</div>
+            <div id="item44">44</div>
+            <div id="item45">45</div>
+            <div id="item46">46</div>
+            <div id="item47">47</div>
+            <div id="item48">48</div>
+            <div id="item49">49</div>
+            <div id="item50">50</div>
+            <div id="item51">51</div>
+            <div id="item52">52</div>
+            <div id="item53">53</div>
+            <div id="item54">54</div>
+            <div id="item55">55</div>
+            <div id="item56">56</div>
+            <div id="item57">57</div>
+            <div id="item58">58</div>
+            <div id="item59">59</div>
+            <div id="item60">60</div>
+            <div id="item61">61</div>
+            <div id="item62">62</div>
+            <div id="item63">63</div>
+            <div id="item64">64</div>
+            <div id="item65">65</div>
+            <div id="item66">66</div>
+            <div id="item67">67</div>
+            <div id="item68">68</div>
+            <div id="item69">69</div>
+            <div id="item70">70</div>
+            <div id="item71">71</div>
+            <div id="item72">72</div>
+            <div id="item73">73</div>
+            <div id="item74">74</div>
+            <div id="item75">75</div>
+            <div id="item76">76</div>
+            <div id="item77">77</div>
+            <div id="item78">78</div>
+            <div id="item79">79</div>
+            <div id="item80">80</div>
+            <div id="item81">81</div>
+            <div id="item82">82</div>
+            <div id="item83">83</div>
+            <div id="item84">84</div>
+            <div id="item85">85</div>
+            <div id="item86">86</div>
+            <div id="item87">87</div>
+            <div id="item88">88</div>
+            <div id="item89">89</div>
+            <div id="item90">90</div>
+            <div id="item91">91</div>
+            <div id="item92">92</div>
+            <div id="item93">93</div>
+            <div id="item94">94</div>
+            <div id="item95">95</div>
+            <div id="item96">96</div>
+            <div id="item97">97</div>
+            <div id="item98">98</div>
+            <div id="item99">99</div>
+            <div id="item100">100</div>
+
+            </div>
+
+            <nav class="paginator dfc" id="paginator" aria-label="Sayfalama"></nav>
+
+        </div>
+
+
+    </div>
+
+    <script>
+        (() => {
+            const CFG = {
+                PAGE_SIZE: 18,     // kolay değişir
+                EDGE_COUNT: 3,    // 1-2-3 ve son-2 son-1 son
+                NEAR_CURRENT: 1,  // aktif sayfa ±1
+                MID_SPAN: 3       // orta değer mid±1
+            };
+
+            const listEl = document.getElementById("itemList") || document.querySelector(".item-list");
+            const pagerEl = document.getElementById("paginator");
+            if (!listEl || !pagerEl) return;
+
+            // Demo: mevcut DOM itemlarını cache'le (backend'e geçince burayı fetchPage ile değiştirirsiniz)
+            const domItems = Array.from(listEl.querySelectorAll(".item-list *"));
+
+            const state = {
+                currentPage: 1,
+                totalCount: domItems.length,
+                get totalPages() {
+                    return Math.max(1, Math.ceil(this.totalCount / CFG.PAGE_SIZE));
+                }
+            };
+
+            const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+            const range = (a, b) => {
+                const out = [];
+                for (let i = a; i <= b; i++) out.push(i);
+                return out;
+            };
+            const midPage = (total) => Math.ceil(total / 2); // 50 => 25
+
+            function buildTokens(current, total) {
+                const pages = new Set();
+
+                // head
+                for (const p of range(1, Math.min(CFG.EDGE_COUNT, total))) pages.add(p);
+
+                // tail
+                const tailStart = Math.max(1, total - CFG.EDGE_COUNT + 1);
+                for (const p of range(tailStart, total)) pages.add(p);
+
+                // mid block (mid±1)
+                const mid = midPage(total);
+                const half = Math.floor(CFG.MID_SPAN / 2);
+                for (const p of range(mid - half, mid + half)) if (p >= 1 && p <= total) pages.add(p);
+
+                // current block (current±1)
+                for (const p of range(current - CFG.NEAR_CURRENT, current + CFG.NEAR_CURRENT)) {
+                    if (p >= 1 && p <= total) pages.add(p);
+                }
+
+                const sorted = [...pages].sort((a, b) => a - b);
+
+                // Gap >= 2 => "…"
+                const tokens = [];
+                for (let i = 0; i < sorted.length; i++) {
+                    const p = sorted[i];
+                    const prev = sorted[i - 1];
+                    if (i > 0 && (p - prev) >= 2) tokens.push("…");
+                    tokens.push(p);
+                }
+                return tokens;
+            }
+
+            function renderPageFromDom(page) {
+                const start = (page - 1) * CFG.PAGE_SIZE;
+                const end = start + CFG.PAGE_SIZE;
+
+                for (let i = 0; i < domItems.length; i++) {
+                    domItems[i].style.display = (i >= start && i < end) ? "" : "none";
+                }
+            }
+
+
+            function renderPager() {
+                const total = state.totalPages;
+                const current = state.currentPage;
+                const tokens = buildTokens(current, total);
+
+                pagerEl.innerHTML = "";
+
+                const makeBtn = ({ label, page, disabled, active, aria }) => {
+                    const b = document.createElement("button");
+                    b.type = "button";
+                    b.textContent = label;
+                    if (page != null) b.dataset.page = String(page);
+                    if (disabled) b.disabled = true;
+                    if (active) b.classList.add("active");
+                    if (aria) b.setAttribute("aria-label", aria);
+                    return b;
+                };
+
+                // Prev (always visible)
+                pagerEl.appendChild(makeBtn({
+                    label: "<",
+                    page: current - 1,
+                    disabled: current <= 1,
+                    aria: "Önceki sayfa"
+                }));
+
+                // Numbers + dots
+                for (const t of tokens) {
+                    if (t === "…") {
+                        const s = document.createElement("span");
+                        s.className = "dots";
+                        s.textContent = "…";
+                        pagerEl.appendChild(s);
+                        continue;
+                    }
+                    pagerEl.appendChild(makeBtn({
+                        label: String(t),
+                        page: t,
+                        disabled: false,
+                        active: t === current,
+                        aria: `Sayfa ${t}`
+                    }));
+                }
+
+                // Next (always visible)
+                pagerEl.appendChild(makeBtn({
+                    label: ">",
+                    page: current + 1,
+                    disabled: current >= total,
+                    aria: "Sonraki sayfa"
+                }));
+            }
+
+            function load(page) {
+                state.currentPage = clamp(page, 1, state.totalPages);
+                renderPageFromDom(state.currentPage);
+                renderPager();
+            }
+
+            pagerEl.addEventListener("click", (e) => {
+                const btn = e.target.closest("button");
+                if (!btn || btn.disabled) return;
+                const page = Number(btn.dataset.page);
+                if (!Number.isFinite(page)) return;
+                load(page);
+            });
+
+            // Dışarıdan kolay kontrol
+            window.auctionPager = {
+                setPageSize(n) {
+                    CFG.PAGE_SIZE = Math.max(1, Number(n) || CFG.PAGE_SIZE);
+                    state.currentPage = 1;
+                    load(1);
+                },
+                refresh() {
+                    // veri güncellendiğinde: sayfa 1'e dön
+                    state.totalCount = domItems.length;
+                    state.currentPage = 1;
+                    load(1);
+                }
+            };
+
+            // Init
+            load(1);
+        })();
+    </script>
+
+    <script src="./assets-partials/category.js" defer></script>
+
+
+  <script src="./assets-partials/location.js" defer></script>
+
+
+</body>
+
+</html>
